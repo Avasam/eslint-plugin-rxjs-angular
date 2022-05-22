@@ -1,0 +1,8 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ruleCreator = void 0;
+const experimental_utils_1 = require("@typescript-eslint/experimental-utils");
+exports.ruleCreator = experimental_utils_1.ESLintUtils.RuleCreator(
+  (name) =>
+    `https://github.com/cartant/eslint-plugin-rxjs-angular/tree/main/docs/rules/${name}.md`
+);

@@ -1,6 +1,5 @@
 yarn-error.log
 /build
-/dist
 /node_modules
 /temp
 package-lock.json
