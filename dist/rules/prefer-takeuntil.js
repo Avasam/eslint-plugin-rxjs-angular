@@ -4,8 +4,7 @@ const eslint_etc_1 = require("eslint-etc");
 const utils_1 = require("../utils");
 const messages = {
   noDestroy: "`ngOnDestroy` is not implemented.",
-  noTakeUntil:
-    "Forbids calling `subscribe` without an accompanying `takeUntil`.",
+  noTakeUntil: "Forbids calling `subscribe` without an accompanying `takeUntil`.",
   notCalled: "`{{name}}.{{method}}()` not called.",
   notDeclared: "Subject `{{name}}` not a class property.",
 };
@@ -14,8 +13,7 @@ const rule = (0, utils_1.ruleCreator)({
   defaultOptions,
   meta: {
     docs: {
-      description:
-        "Forbids `subscribe` calls without an accompanying `takeUntil` within Angular components (and, optionally, within services, directives, and pipes).",
+      description: "Forbids `subscribe` calls without an accompanying `takeUntil` within Angular components (and, optionally, within services, directives, and pipes).",
       recommended: false,
     },
     fixable: undefined,
@@ -47,13 +45,7 @@ const rule = (0, utils_1.ruleCreator)({
   create: (context, unused) => {
     const { couldBeObservable } = (0, eslint_etc_1.getTypeServices)(context);
     const [config = {}] = context.options;
-    const {
-      alias = [],
-      checkComplete = false,
-      checkDecorators = ["Component"],
-      checkDestroy = alias.length === 0,
-      superClass = [],
-    } = config;
+    const { alias = [], checkComplete = false, checkDecorators = ["Component"], checkDestroy = alias.length === 0, superClass = [], } = config;
     const entries = [];
     function checkEntry(entry) {
       const { subscribeCallExpressions } = entry;
@@ -74,14 +66,7 @@ const rule = (0, utils_1.ruleCreator)({
     }
     function checkNgOnDestroy(entry) {
       var _a;
-      const {
-        classDeclaration,
-        completeCallExpressions,
-        nextCallExpressions,
-        ngOnDestroyDefinition,
-        extendsSuperClassDeclaration,
-        subscribeCallExpressionsToNames,
-      } = entry;
+      const { classDeclaration, completeCallExpressions, nextCallExpressions, ngOnDestroyDefinition, extendsSuperClassDeclaration, subscribeCallExpressionsToNames, } = entry;
       if (subscribeCallExpressionsToNames.size === 0) {
         return;
       }
@@ -91,18 +76,13 @@ const rule = (0, utils_1.ruleCreator)({
         }
         context.report({
           messageId: "noDestroy",
-          node:
-            (_a = classDeclaration.id) !== null && _a !== void 0
-              ? _a
-              : classDeclaration,
+          node: (_a = classDeclaration.id) !== null && _a !== void 0 ? _a : classDeclaration,
         });
         return;
       }
       const namesToChecks = new Map();
       const names = new Set();
-      subscribeCallExpressionsToNames.forEach((value) =>
-        value.forEach((name) => names.add(name))
-      );
+      subscribeCallExpressionsToNames.forEach((value) => value.forEach((name) => names.add(name)));
       names.forEach((name) => {
         var _a;
         const check = {
@@ -114,10 +94,7 @@ const rule = (0, utils_1.ruleCreator)({
           check.descriptors.push({
             data: { name },
             messageId: "notDeclared",
-            node:
-              (_a = classDeclaration.id) !== null && _a !== void 0
-                ? _a
-                : classDeclaration,
+            node: (_a = classDeclaration.id) !== null && _a !== void 0 ? _a : classDeclaration,
           });
         }
         if (!checkSubjectCall(name, nextCallExpressions)) {
@@ -136,9 +113,7 @@ const rule = (0, utils_1.ruleCreator)({
         }
       });
       subscribeCallExpressionsToNames.forEach((names) => {
-        const report = [...names].every(
-          (name) => namesToChecks.get(name).descriptors.length > 0
-        );
+        const report = [...names].every((name) => namesToChecks.get(name).descriptors.length > 0);
         if (report) {
           names.forEach((name) => (namesToChecks.get(name).report = true));
         }
@@ -157,13 +132,12 @@ const rule = (0, utils_1.ruleCreator)({
       if (callee.name === "takeUntil" || alias.includes(callee.name)) {
         const [arg] = callExpression.arguments;
         if (arg) {
-          if (
-            (0, eslint_etc_1.isMemberExpression)(arg) &&
+          if ((0, eslint_etc_1.isMemberExpression)(arg) &&
             (0, eslint_etc_1.isThisExpression)(arg.object) &&
-            (0, eslint_etc_1.isIdentifier)(arg.property)
-          ) {
+            (0, eslint_etc_1.isIdentifier)(arg.property)) {
             return { found: true, name: arg.property.name };
-          } else if (arg && (0, eslint_etc_1.isIdentifier)(arg)) {
+          }
+          else if (arg && (0, eslint_etc_1.isIdentifier)(arg)) {
             return { found: true, name: arg.name };
           }
         }
@@ -174,24 +148,19 @@ const rule = (0, utils_1.ruleCreator)({
       return { found: false };
     }
     function checkSubjectCall(name, callExpressions) {
-      const callExpression = callExpressions.find(
-        ({ callee }) =>
-          ((0, eslint_etc_1.isMemberExpression)(callee) &&
-            (0, eslint_etc_1.isIdentifier)(callee.object) &&
-            callee.object.name === name) ||
-          ((0, eslint_etc_1.isMemberExpression)(callee) &&
-            (0, eslint_etc_1.isMemberExpression)(callee.object) &&
-            (0, eslint_etc_1.isThisExpression)(callee.object.object) &&
-            (0, eslint_etc_1.isIdentifier)(callee.object.property) &&
-            callee.object.property.name === name)
-      );
+      const callExpression = callExpressions.find(({ callee }) => ((0, eslint_etc_1.isMemberExpression)(callee) &&
+        (0, eslint_etc_1.isIdentifier)(callee.object) &&
+        callee.object.name === name) ||
+        ((0, eslint_etc_1.isMemberExpression)(callee) &&
+          (0, eslint_etc_1.isMemberExpression)(callee.object) &&
+          (0, eslint_etc_1.isThisExpression)(callee.object.object) &&
+          (0, eslint_etc_1.isIdentifier)(callee.object.property) &&
+          callee.object.property.name === name));
       return Boolean(callExpression);
     }
     function checkSubjectProperty(name, entry) {
       const { propertyDefinitions } = entry;
-      const propertyDefinition = propertyDefinitions.find(
-        (propertyDefinition) => propertyDefinition.key.name === name
-      );
+      const propertyDefinition = propertyDefinitions.find((propertyDefinition) => propertyDefinition.key.name === name);
       return Boolean(propertyDefinition);
     }
     function checkSubscribe(callExpression, entry) {
@@ -203,12 +172,10 @@ const rule = (0, utils_1.ruleCreator)({
         return;
       }
       const { object, property } = callee;
-      if (
-        (0, eslint_etc_1.isCallExpression)(object) &&
+      if ((0, eslint_etc_1.isCallExpression)(object) &&
         (0, eslint_etc_1.isMemberExpression)(object.callee) &&
         (0, eslint_etc_1.isIdentifier)(object.callee.property) &&
-        object.callee.property.name === "pipe"
-      ) {
+        object.callee.property.name === "pipe") {
         const operators = object.arguments;
         operators.forEach((operator) => {
           if ((0, eslint_etc_1.isCallExpression)(operator)) {
@@ -233,8 +200,7 @@ const rule = (0, utils_1.ruleCreator)({
     }
     function hasDecorator(node) {
       const { decorators } = node;
-      return (
-        decorators &&
+      return (decorators &&
         decorators.some((decorator) => {
           const { expression } = decorator;
           if (!(0, eslint_etc_1.isCallExpression)(expression)) {
@@ -245,22 +211,20 @@ const rule = (0, utils_1.ruleCreator)({
           }
           const { name } = expression.callee;
           return checkDecorators.some((check) => name === check);
-        })
-      );
+        }));
     }
-    const extendsSuperClassDeclaration =
-      superClass.length === 0
-        ? {}
-        : {
-            [`ClassDeclaration:matches(${superClass
-              .map((className) => `[superClass.name="${className}"]`)
-              .join()})`]: (node) => {
-              const entry = getEntry();
-              if (entry && entry.hasDecorator) {
-                entry.extendsSuperClassDeclaration = node;
-              }
-            },
-          };
+    const extendsSuperClassDeclaration = superClass.length === 0
+      ? {}
+      : {
+        [`ClassDeclaration:matches(${superClass
+          .map((className) => `[superClass.name="${className}"]`)
+          .join()})`]: (node) => {
+            const entry = getEntry();
+            if (entry && entry.hasDecorator) {
+              entry.extendsSuperClassDeclaration = node;
+            }
+          },
+      };
     return {
       "CallExpression[callee.property.name='subscribe']": (node) => {
         const entry = getEntry();
@@ -299,20 +263,18 @@ const rule = (0, utils_1.ruleCreator)({
         }
       },
       ...extendsSuperClassDeclaration,
-      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='next']":
-        (node) => {
-          const entry = getEntry();
-          if (entry && entry.hasDecorator) {
-            entry.nextCallExpressions.push(node);
-          }
-        },
-      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='complete']":
-        (node) => {
-          const entry = getEntry();
-          if (entry && entry.hasDecorator) {
-            entry.completeCallExpressions.push(node);
-          }
-        },
+      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='next']": (node) => {
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.nextCallExpressions.push(node);
+        }
+      },
+      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='complete']": (node) => {
+        const entry = getEntry();
+        if (entry && entry.hasDecorator) {
+          entry.completeCallExpressions.push(node);
+        }
+      },
     };
   },
 });
