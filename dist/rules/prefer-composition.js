@@ -7,7 +7,8 @@ const rule = (0, utils_1.ruleCreator)({
   defaultOptions,
   meta: {
     docs: {
-      description: "Forbids `subscribe` calls that are not composed within Angular components (and, optionally, within services, directives, and pipes).",
+      description:
+        "Forbids `subscribe` calls that are not composed within Angular components (and, optionally, within services, directives, and pipes).",
       recommended: false,
     },
     fixable: undefined,
@@ -36,12 +37,22 @@ const rule = (0, utils_1.ruleCreator)({
   },
   name: "prefer-composition",
   create: (context, unused) => {
-    const { couldBeObservable, couldBeSubscription } = (0, eslint_etc_1.getTypeServices)(context);
-    const [{ checkDecorators = ["Component"], superClass = [] } = {}] = context.options;
+    const { couldBeObservable, couldBeSubscription } = (0,
+    eslint_etc_1.getTypeServices)(context);
+    const [{ checkDecorators = ["Component"], superClass = [] } = {}] =
+      context.options;
     const entries = [];
     function checkEntry(record) {
       var _a;
-      const { classDeclaration, propertyDefinitions, ngOnDestroyDefinition, extendsSuperClassDeclaration, subscribeCallExpressions, subscriptions, unsubscribeCallExpressions, } = record;
+      const {
+        classDeclaration,
+        propertyDefinitions,
+        ngOnDestroyDefinition,
+        extendsSuperClassDeclaration,
+        subscribeCallExpressions,
+        subscriptions,
+        unsubscribeCallExpressions,
+      } = record;
       if (subscribeCallExpressions.length === 0) {
         return;
       }
@@ -70,25 +81,35 @@ const rule = (0, utils_1.ruleCreator)({
         }
         context.report({
           messageId: "notImplemented",
-          node: (_a = classDeclaration.id) !== null && _a !== void 0 ? _a : classDeclaration,
+          node:
+            (_a = classDeclaration.id) !== null && _a !== void 0
+              ? _a
+              : classDeclaration,
         });
         return;
       }
       subscriptions.forEach((subscription) => {
         var _a;
-        const propertyDefinition = propertyDefinitions.find((propertyDefinition) => propertyDefinition.key.name === subscription);
+        const propertyDefinition = propertyDefinitions.find(
+          (propertyDefinition) => propertyDefinition.key.name === subscription
+        );
         if (!propertyDefinition) {
           context.report({
             data: { name: subscription },
             messageId: "notDeclared",
-            node: (_a = classDeclaration.id) !== null && _a !== void 0 ? _a : classDeclaration,
+            node:
+              (_a = classDeclaration.id) !== null && _a !== void 0
+                ? _a
+                : classDeclaration,
           });
           return;
         }
-        const callExpression = unsubscribeCallExpressions.find((callExpression) => {
-          const name = getMethodCalleeName(callExpression);
-          return name === subscription;
-        });
+        const callExpression = unsubscribeCallExpressions.find(
+          (callExpression) => {
+            const name = getMethodCalleeName(callExpression);
+            return name === subscription;
+          }
+        );
         if (!callExpression) {
           context.report({
             data: { name: subscription },
@@ -107,7 +128,10 @@ const rule = (0, utils_1.ruleCreator)({
       const { callee } = callExpression;
       if ((0, eslint_etc_1.isMemberExpression)(callee)) {
         const { object } = callee;
-        if ((0, eslint_etc_1.isMemberExpression)(object) && (0, eslint_etc_1.isIdentifier)(object.property)) {
+        if (
+          (0, eslint_etc_1.isMemberExpression)(object) &&
+          (0, eslint_etc_1.isIdentifier)(object.property)
+        ) {
           return object.property.name;
         }
         if ((0, eslint_etc_1.isIdentifier)(object)) {
@@ -125,7 +149,8 @@ const rule = (0, utils_1.ruleCreator)({
     }
     function hasDecorator(node) {
       const { decorators } = node;
-      return (decorators &&
+      return (
+        decorators &&
         decorators.some((decorator) => {
           const { expression } = decorator;
           if (!(0, eslint_etc_1.isCallExpression)(expression)) {
@@ -136,7 +161,8 @@ const rule = (0, utils_1.ruleCreator)({
           }
           const { name } = expression.callee;
           return checkDecorators.some((check) => name === check);
-        }));
+        })
+      );
     }
     function isComposed(callExpression, entry) {
       const { addCallExpressions, subscriptions } = entry;
@@ -145,7 +171,9 @@ const rule = (0, utils_1.ruleCreator)({
         return false;
       }
       if ((0, eslint_etc_1.isCallExpression)(parent)) {
-        const addCallExpression = addCallExpressions.find((callExpression) => callExpression === parent);
+        const addCallExpression = addCallExpressions.find(
+          (callExpression) => callExpression === parent
+        );
         if (!addCallExpression) {
           return false;
         }
@@ -160,12 +188,17 @@ const rule = (0, utils_1.ruleCreator)({
         subscriptions.add(name);
         return true;
       }
-      if ((0, eslint_etc_1.isVariableDeclarator)(parent) && (0, eslint_etc_1.isIdentifier)(parent.id)) {
+      if (
+        (0, eslint_etc_1.isVariableDeclarator)(parent) &&
+        (0, eslint_etc_1.isIdentifier)(parent.id)
+      ) {
         return isVariableComposed(parent.id, entry);
       }
-      if ((0, eslint_etc_1.isAssignmentExpression)(parent) &&
+      if (
+        (0, eslint_etc_1.isAssignmentExpression)(parent) &&
         (0, eslint_etc_1.isIdentifier)(parent.left) &&
-        parent.operator === "=") {
+        parent.operator === "="
+      ) {
         return isVariableComposed(parent.left, entry);
       }
       return false;
@@ -173,7 +206,9 @@ const rule = (0, utils_1.ruleCreator)({
     function isVariableComposed(identifier, entry) {
       const { name } = identifier;
       const { addCallExpressions, subscriptions } = entry;
-      const addCallExpression = addCallExpressions.find((callExpression) => getMethodCalleeName(callExpression) === name);
+      const addCallExpression = addCallExpressions.find(
+        (callExpression) => getMethodCalleeName(callExpression) === name
+      );
       if (!addCallExpression) {
         return false;
       }
@@ -184,18 +219,19 @@ const rule = (0, utils_1.ruleCreator)({
       subscriptions.add(name);
       return true;
     }
-    const extendsSuperClassDeclaration = superClass.length === 0
-      ? {}
-      : {
-        [`ClassDeclaration:matches(${superClass
-          .map((className) => `[superClass.name="${className}"]`)
-          .join()})`]: (node) => {
-            const entry = getEntry();
-            if (entry && entry.hasDecorator) {
-              entry.extendsSuperClassDeclaration = node;
-            }
-          },
-      };
+    const extendsSuperClassDeclaration =
+      superClass.length === 0
+        ? {}
+        : {
+            [`ClassDeclaration:matches(${superClass
+              .map((className) => `[superClass.name="${className}"]`)
+              .join()})`]: (node) => {
+              const entry = getEntry();
+              if (entry && entry.hasDecorator) {
+                entry.extendsSuperClassDeclaration = node;
+              }
+            },
+          };
     return {
       "CallExpression[callee.property.name='add']": (node) => {
         const entry = getEntry();
@@ -239,12 +275,13 @@ const rule = (0, utils_1.ruleCreator)({
           entry.ngOnDestroyDefinition = node;
         }
       },
-      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='unsubscribe']": (node) => {
-        const entry = getEntry();
-        if (entry && entry.hasDecorator) {
-          entry.unsubscribeCallExpressions.push(node);
-        }
-      },
+      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='unsubscribe']":
+        (node) => {
+          const entry = getEntry();
+          if (entry && entry.hasDecorator) {
+            entry.unsubscribeCallExpressions.push(node);
+          }
+        },
     };
   },
 });
