@@ -3,4 +3,3 @@ yarn-error.log
 /dist
 /node_modules
 /temp
-package-lock.json
