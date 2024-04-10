@@ -9,6 +9,8 @@ const messages = {
   notCalled: "`{{name}}.{{method}}()` not called.",
   notDeclared: "Subject `{{name}}` not a class property.",
 };
+const ngOnDestroyMethodSelector =
+  "MethodDefinition[key.name='ngOnDestroy'][kind='method']";
 const defaultOptions = [];
 const rule = (0, utils_1.ruleCreator)({
   defaultOptions,
@@ -80,6 +82,7 @@ const rule = (0, utils_1.ruleCreator)({
         nextCallExpressions,
         ngOnDestroyDefinition,
         extendsSuperClassDeclaration,
+        superNgOnDestroyCallExpression,
         subscribeCallExpressionsToNames,
       } = entry;
       if (subscribeCallExpressionsToNames.size === 0) {
@@ -110,29 +113,42 @@ const rule = (0, utils_1.ruleCreator)({
           report: false,
         };
         namesToChecks.set(name, check);
-        if (!checkSubjectProperty(name, entry)) {
-          check.descriptors.push({
-            data: { name },
-            messageId: "notDeclared",
-            node:
-              (_a = classDeclaration.id) !== null && _a !== void 0
-                ? _a
-                : classDeclaration,
-          });
-        }
-        if (!checkSubjectCall(name, nextCallExpressions)) {
-          check.descriptors.push({
-            data: { method: "next", name },
-            messageId: "notCalled",
-            node: ngOnDestroyDefinition.key,
-          });
-        }
-        if (checkComplete && !checkSubjectCall(name, completeCallExpressions)) {
-          check.descriptors.push({
-            data: { method: "complete", name },
-            messageId: "notCalled",
-            node: ngOnDestroyDefinition.key,
-          });
+        if (extendsSuperClassDeclaration) {
+          if (!superNgOnDestroyCallExpression) {
+            check.descriptors.push({
+              data: { method: "ngOnDestroy", name: "super" },
+              messageId: "notCalled",
+              node: ngOnDestroyDefinition.key,
+            });
+          }
+        } else {
+          if (!checkSubjectProperty(name, entry)) {
+            check.descriptors.push({
+              data: { name },
+              messageId: "notDeclared",
+              node:
+                (_a = classDeclaration.id) !== null && _a !== void 0
+                  ? _a
+                  : classDeclaration,
+            });
+          }
+          if (!checkSubjectCall(name, nextCallExpressions)) {
+            check.descriptors.push({
+              data: { method: "next", name },
+              messageId: "notCalled",
+              node: ngOnDestroyDefinition.key,
+            });
+          }
+          if (
+            checkComplete &&
+            !checkSubjectCall(name, completeCallExpressions)
+          ) {
+            check.descriptors.push({
+              data: { method: "complete", name },
+              messageId: "notCalled",
+              node: ngOnDestroyDefinition.key,
+            });
+          }
         }
       });
       subscribeCallExpressionsToNames.forEach((names) => {
@@ -292,21 +308,28 @@ const rule = (0, utils_1.ruleCreator)({
           entry.propertyDefinitions.push(node);
         }
       },
-      "MethodDefinition[key.name='ngOnDestroy'][kind='method']": (node) => {
+      [ngOnDestroyMethodSelector]: (node) => {
         const entry = getEntry();
         if (entry && entry.hasDecorator) {
           entry.ngOnDestroyDefinition = node;
         }
       },
       ...extendsSuperClassDeclaration,
-      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='next']":
+      [`${ngOnDestroyMethodSelector} CallExpression[callee.object.type='Super'][callee.property.name='ngOnDestroy']`]:
+        (node) => {
+          const entry = getEntry();
+          if (entry && entry.hasDecorator) {
+            entry.superNgOnDestroyCallExpression = node;
+          }
+        },
+      [`${ngOnDestroyMethodSelector} CallExpression[callee.property.name='next']`]:
         (node) => {
           const entry = getEntry();
           if (entry && entry.hasDecorator) {
             entry.nextCallExpressions.push(node);
           }
         },
-      "MethodDefinition[key.name='ngOnDestroy'][kind='method'] CallExpression[callee.property.name='complete']":
+      [`${ngOnDestroyMethodSelector} CallExpression[callee.property.name='complete']`]:
         (node) => {
           const entry = getEntry();
           if (entry && entry.hasDecorator) {
