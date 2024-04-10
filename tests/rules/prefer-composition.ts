@@ -100,20 +100,21 @@ ruleTester({ types: true }).run("prefer-composition", rule, {
     },
     {
       code: stripIndent`
+        // extends superClass
         // https://github.com/cartant/eslint-plugin-rxjs-angular/issues/1
-        import { Component } from "@angular/core";
-        import { of } from "rxjs";
-        import { switchMap, take } from "rxjs/operators";
+        import { Component, Directive, OnDestroy } from "@angular/core";
+        import { of, Subject } from "rxjs";
+        import { switchMap, takeUntil } from "rxjs/operators";
 
         const o = of("o");
 
         @Directive()
         abstract class BaseComponent implements OnDestroy {
           private readonly destroySubject = new Subject<void>();
-          protected readonly destroy = this.destroy.asObservable();
+          protected readonly destroy = this.destroySubject.asObservable();
           ngOnDestroy() {
-            this.destroy.next();
-            this.destroy.complete();
+            this.destroySubject.next();
+            this.destroySubject.complete();
           }
         }
 

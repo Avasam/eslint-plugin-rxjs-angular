@@ -371,21 +371,22 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
     },
     {
       code: stripIndent`
+        // extends superClass
         // https://github.com/cartant/eslint-plugin-rxjs-angular/issues/1
-        import { Component } from "@angular/core";
-        import { of } from "rxjs";
-        import { switchMap, take } from "rxjs/operators";
+        import { Component, Directive, OnDestroy } from "@angular/core";
+        import { of, Subject } from "rxjs";
+        import { switchMap, takeUntil } from "rxjs/operators";
 
         const o = of("o");
 
         @Directive()
         abstract class BaseComponent implements OnDestroy {
           private readonly destroySubject = new Subject<void>();
-          protected readonly destroy = this.destroy.asObservable();
+          protected readonly destroy = this.destroySubject.asObservable();
 
           ngOnDestroy() {
-            this.destroy.next();
-            this.destroy.complete();
+            this.destroySubject.next();
+            this.destroySubject.complete();
           }
         }
 
@@ -404,6 +405,51 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
       options: [
         {
           superClass: ["BaseComponent"],
+          checkComplete: true,
+        },
+      ],
+    },
+    {
+      code: stripIndent`
+        // extends superClass and implements OnDestroy
+        // https://github.com/cartant/eslint-plugin-rxjs-angular/issues/1
+        import { Component, Directive, OnDestroy } from "@angular/core";
+        import { of, Subject } from "rxjs";
+        import { switchMap, takeUntil } from "rxjs/operators";
+
+        const o = of("o");
+
+        @Directive()
+        abstract class BaseComponent implements OnDestroy {
+          private readonly destroySubject = new Subject<void>();
+          protected readonly destroy = this.destroySubject.asObservable();
+
+          ngOnDestroy() {
+            this.destroySubject.next();
+            this.destroySubject.complete();
+          }
+        }
+
+        @Component({
+          selector: "component-with-super-class-and-destroy"
+        })
+        class CorrectDestroyComponent extends BaseComponent implements OnDestroy {
+          someMethod() {
+            o.pipe(
+              switchMap(_ => o),
+              takeUntil(this.destroy)
+            ).subscribe();
+          }
+
+          override ngOnDestroy(): void {
+            super.ngOnDestroy()
+          }
+        }
+      `,
+      options: [
+        {
+          superClass: ["BaseComponent"],
+          checkComplete: true,
         },
       ],
     },
@@ -691,6 +737,90 @@ ruleTester({ types: true }).run("prefer-takeuntil", rule, {
         options: [
           {
             checkDecorators: ["Component", "Pipe", "Injectable", "Directive"],
+          },
+        ],
+      }
+    ),
+    fromFixture(
+      stripIndent`
+        // extends superClass and implements OnDestroy, missing super.ngOnDestroy()
+        // https://github.com/cartant/eslint-plugin-rxjs-angular/issues/1
+        import { Component, Directive, OnDestroy } from "@angular/core";
+        import { of, Subject } from "rxjs";
+        import { switchMap, takeUntil } from "rxjs/operators";
+
+        const o = of("o");
+
+        @Directive()
+        abstract class BaseComponent implements OnDestroy {
+          private readonly destroySubject = new Subject<void>();
+          protected readonly destroy = this.destroySubject.asObservable();
+
+          ngOnDestroy() {
+            this.destroySubject.next();
+            this.destroySubject.complete();
+          }
+        }
+
+        @Component({
+          selector: "missing-super-call"
+        })
+        class MissingSuperCallComponent extends BaseComponent implements OnDestroy {
+          someMethod() {
+            o.pipe(
+              switchMap(_ => o),
+              takeUntil(this.destroy)
+            ).subscribe();
+          }
+
+          override ngOnDestroy(): void {
+                   ~~~~~~~~~~~ [notCalled { "method": "ngOnDestroy", "name": "super" }]
+          }
+        }
+      `,
+      {
+        options: [
+          {
+            superClass: ["BaseComponent"],
+            checkComplete: true,
+          },
+        ],
+      }
+    ),
+    fromFixture(
+      stripIndent`
+        // Calls super.ngOnDestroy() w/o extending base class
+        // https://github.com/cartant/eslint-plugin-rxjs-angular/issues/1
+        import { Component, OnDestroy } from "@angular/core";
+        import { of } from "rxjs";
+        import { switchMap, takeUntil } from "rxjs/operators";
+
+        const o = of("o");
+
+        @Component({
+          selector: "missing-base"
+        })
+        class MissingBaseComponent extends SomeClass implements OnDestroy {
+              ~~~~~~~~~~~~~~~~~~~~ [notDeclared { "name": "destroy" }]
+          someMethod() {
+            o.pipe(
+              switchMap(_ => o),
+              takeUntil(this.destroy)
+            ).subscribe();
+          }
+
+          override ngOnDestroy(): void {
+                   ~~~~~~~~~~~ [notCalled { "method": "next", "name": "destroy" }]
+                   ~~~~~~~~~~~ [notCalled { "method": "complete", "name": "destroy" }]
+            super.ngOnDestroy()
+          }
+        }
+      `,
+      {
+        options: [
+          {
+            superClass: ["BaseComponent"],
+            checkComplete: true,
           },
         ],
       }
